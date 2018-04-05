@@ -12,9 +12,9 @@ public class ParkingLot {
         this.vehicles = new HashMap<>();
     }
 
-    public Object park(Vehicle vehicle) throws AlreadyParkedException, FullLotException {
-        if(vehicles.containsValue(vehicle)) throw new AlreadyParkedException();
-        if (isFull()) throw new FullLotException();
+    public Object park(Vehicle vehicle) throws UnableToParkException {
+        if(vehicles.containsValue(vehicle)) throw new UnableToParkException("Vehicle is already in parking lot!");
+        if (isFull()) throw new UnableToParkException("Parking lot is full!");
         Object token = new Object();
         vehicles.put(token,vehicle);
         return token;

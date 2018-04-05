@@ -22,34 +22,34 @@ public class ParkingLotTest {
     }
 
     @Test
-    public void shouldBeAbleToParkTheVehicle() throws AlreadyParkedException, FullLotException {
+    public void shouldBeAbleToParkTheVehicle() throws UnableToParkException {
         Object token = parkingLot.park(vehicle);
         assertNotNull(token);
     }
 
     @Test
-    public void shouldBeAbleToCheckoutTheVehicle() throws InvalidCheckoutException, AlreadyParkedException, FullLotException {
+    public void shouldBeAbleToCheckoutTheVehicle() throws InvalidCheckoutException, UnableToParkException {
         Object token = parkingLot.park(vehicle);
         Object myCar = this.parkingLot.checkout(token);
         assertEquals(myCar, vehicle);
         assertFalse(parkingLot.hasVehicleFor(token));
     }
 
-    @Test(expected = AlreadyParkedException.class)
-    public void shouldNotBeAbleToParkTheSameVehicleTwice() throws AlreadyParkedException, FullLotException {
+    @Test(expected = UnableToParkException.class)
+    public void shouldNotBeAbleToParkTheSameVehicleTwice() throws UnableToParkException {
         parkingLot.park(vehicle);
         parkingLot.park(vehicle);
     }
 
     @Test(expected = InvalidCheckoutException.class)
-    public void shouldNotBeAbleToCheckoutSameVehicleTwice() throws InvalidCheckoutException, AlreadyParkedException, FullLotException {
+    public void shouldNotBeAbleToCheckoutSameVehicleTwice() throws InvalidCheckoutException, UnableToParkException {
         Object token = parkingLot.park(vehicle);
         parkingLot.checkout(token);
         parkingLot.checkout(token);
     }
 
     @Test
-    public void shouldCheckoutSpecificVehicle() throws InvalidCheckoutException, AlreadyParkedException, FullLotException {
+    public void shouldCheckoutSpecificVehicle() throws InvalidCheckoutException, UnableToParkException {
         Object token = parkingLot.park(vehicle);
         TestVehicle anotherCar = new TestVehicle();
         Object anotherToken = parkingLot.park(anotherCar);
@@ -63,14 +63,14 @@ public class ParkingLotTest {
     }
 
     @Test
-    public void shouldAssertTrueWhenParkingLotIsFull() throws AlreadyParkedException, FullLotException {
+    public void shouldAssertTrueWhenParkingLotIsFull() throws UnableToParkException {
         ParkingLot parkingLot = new ParkingLot(1);
         parkingLot.park(vehicle);
         assertTrue(parkingLot.isFull());
     }
 
     @Test
-    public void shouldAssertTrueWhenLotIsFullAndAfterCheckoutLotShouldNotBeFull() throws AlreadyParkedException, FullLotException, InvalidCheckoutException {
+    public void shouldAssertTrueWhenLotIsFullAndAfterCheckoutLotShouldNotBeFull() throws UnableToParkException, InvalidCheckoutException {
         ParkingLot parkingLot = new ParkingLot(2);
         parkingLot.park(vehicle);
         Object anotherToken = parkingLot.park(new TestVehicle());
@@ -79,11 +79,19 @@ public class ParkingLotTest {
         assertFalse(parkingLot.isFull());
     }
 
-    @Test(expected = FullLotException.class)
-    public void shouldNotAllowToParkVehicleWhenLotIsFull() throws AlreadyParkedException, FullLotException {
+    @Test(expected = UnableToParkException.class)
+    public void shouldNotAllowToParkVehicleWhenLotIsFull() throws UnableToParkException {
         ParkingLot parkingLot = new ParkingLot(2);
         parkingLot.park(vehicle);
         parkingLot.park(new TestVehicle());
         parkingLot.park(new TestVehicle());
+    }
+
+    @Test
+    public void shouldBeAbleToParkIfParkingLotIsNotFull() throws UnableToParkException, InvalidCheckoutException {
+        ParkingLot parkingLot = new ParkingLot(1);
+        Object token = parkingLot.park(vehicle);
+        parkingLot.checkout(token);
+        assertNotNull(parkingLot.park(new TestVehicle()));
     }
 }
