@@ -4,25 +4,29 @@ import java.util.HashMap;
 import java.util.Objects;
 
 public class ParkingLot {
-    private HashMap<Object,Object> parkedCars;
+    private final int capacity;
+    private HashMap<Object,Vehicle> vehicles;
 
-    public ParkingLot() {
-        this.parkedCars = new HashMap<>();
+    public ParkingLot(int capacity) {
+        this.capacity = capacity;
+        this.vehicles = new HashMap<>();
     }
 
-    public Object park(Object car) {
+    public Object park(Vehicle vehicle) throws AlreadyParkedException, FullLotException {
+        if(vehicles.containsValue(vehicle)) throw new AlreadyParkedException();
+        if (isFull()) throw new FullLotException();
         Object token = new Object();
-        parkedCars.put(token,car);
+        vehicles.put(token,vehicle);
         return token;
     }
 
-    private boolean hasCar(Object token) {
-        return parkedCars.containsKey(token);
+    public boolean isFull() {
+        return vehicles.size() == capacity;
     }
 
-    public Object checkout(Object token) throws CarNotInLotException {
-        if(!hasCar(token)) throw new CarNotInLotException();
-        return parkedCars.remove(token);
+    public Vehicle checkout(Object token) throws InvalidCheckoutException {
+        if(!hasVehicleFor(token)) throw new InvalidCheckoutException();
+        return vehicles.remove(token);
     }
 
     @Override
@@ -30,11 +34,15 @@ public class ParkingLot {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ParkingLot that = (ParkingLot) o;
-        return Objects.equals(parkedCars, that.parkedCars);
+        return Objects.equals(vehicles, that.vehicles);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(parkedCars);
+        return Objects.hash(vehicles);
+    }
+
+    public boolean hasVehicleFor(Object token) {
+        return vehicles.containsKey(token);
     }
 }
