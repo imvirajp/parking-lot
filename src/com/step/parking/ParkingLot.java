@@ -4,45 +4,61 @@ import java.util.HashMap;
 import java.util.Objects;
 
 public class ParkingLot {
-    private final int capacity;
-    private HashMap<Object,Vehicle> vehicles;
+  private final HashMap <Object,Vehicle> vehicles;
+  private int capacity;
+  private final MyEvents events;
 
-    public ParkingLot(int capacity) {
-        this.capacity = capacity;
-        this.vehicles = new HashMap<>();
-    }
 
-    public Object park(Vehicle vehicle) throws UnableToParkException {
-        if(vehicles.containsValue(vehicle)) throw new UnableToParkException("Vehicle is already in parking lot!");
-        if (isFull()) throw new UnableToParkException("Parking lot is full!");
-        Object token = new Object();
-        vehicles.put(token,vehicle);
-        return token;
-    }
+  public ParkingLot(int capacity,MyEvents events) {
+    this.capacity = capacity;
+    this.vehicles = new HashMap<> ( );
+    this.events = events;
+  }
 
-    public boolean isFull() {
-        return vehicles.size() == capacity;
+  public Object park(Vehicle car) throws CarCannotBeParkedException {
+    if (isFull())
+      throw new CarCannotBeParkedException ();
+    if (vehicles.containsValue ( car ))
+      throw new CarCannotBeParkedException ();
+    Object token = new Object ();
+    vehicles.put(token,car);
+    if(isFull()){
+      this.events.fireFullEvent();
     }
+    return token;
+  }
 
-    public Vehicle checkout(Object token) throws InvalidCheckoutException {
-        if(!hasVehicleFor(token)) throw new InvalidCheckoutException();
-        return vehicles.remove(token);
+  public Vehicle unParkCar(Object token) throws CarNotFoundException {
+    if (!hasCar (token))
+      throw new CarNotFoundException ();
+    if (isFull()){
+      this.events.fireHasSpaceEvent();
     }
+    Vehicle car = vehicles.remove (token);
+    return car;
+  }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ParkingLot that = (ParkingLot) o;
-        return Objects.equals(vehicles, that.vehicles);
-    }
+  public boolean hasCar(Object token) {
+    return vehicles.containsKey ( token );
+  }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(vehicles);
-    }
+  @Override
+  public String toString() {
+    return "ParkingLot{" +
+            "vehicles=" + vehicles +
+            '}';
+  }
 
-    public boolean hasVehicleFor(Object token) {
-        return vehicles.containsKey(token);
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hash ( vehicles , capacity );
+  }
+
+  public boolean isFull() {
+    return capacity == vehicles.size ();
+  }
+
+  public void addListener(ParkingLotListener parkingLotListener) {
+    events.addListener(parkingLotListener);
+  }
 }

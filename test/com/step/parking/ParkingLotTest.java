@@ -4,94 +4,120 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
-public class ParkingLotTest {
+public class ParkingLotTest{
+  public class TestCar implements Vehicle {}
+  ParkingLot parkingLot;
+  Vehicle car;
+  MyEvents testListener = mock(MyEvents.class);
 
-    private ParkingLot parkingLot;
-    private TestVehicle vehicle;
+  @Before
+  public void setUp() {
+    parkingLot = new ParkingLot (5,testListener);
+    car = new TestCar ();
+  }
 
-    private class TestVehicle implements Vehicle {
-        public TestVehicle() {
-        }
-    }
+  @Test
+  public void shouldParkCar() throws CarCannotBeParkedException {
+    Object token = parkingLot.park (car);
+    assertNotNull(token);
+  }
 
-    @Before
-    public void setUp() {
-        parkingLot = new ParkingLot(5);
-        vehicle = new TestVehicle();
-    }
+  @Test(expected = CarCannotBeParkedException.class)
+  public void shouldThrowExceptionIfCarIsAlreadyParked() throws CarCannotBeParkedException {
+    parkingLot.park (car);
+    parkingLot.park (car);
+  }
 
-    @Test
-    public void shouldBeAbleToParkTheVehicle() throws UnableToParkException {
-        Object token = parkingLot.park(vehicle);
-        assertNotNull(token);
-    }
+  @Test
+  public void shouldUnParkCar() throws CarNotFoundException, CarCannotBeParkedException {
+    Object token = parkingLot.park(car);
+    Vehicle myCar = parkingLot.unParkCar(token);
+    assertFalse(parkingLot.hasCar(this.car));
+    assertEquals(car,myCar);
+  }
 
-    @Test
-    public void shouldBeAbleToCheckoutTheVehicle() throws InvalidCheckoutException, UnableToParkException {
-        Object token = parkingLot.park(vehicle);
-        Object myCar = this.parkingLot.checkout(token);
-        assertEquals(myCar, vehicle);
-        assertFalse(parkingLot.hasVehicleFor(token));
-    }
+  @Test
+  public void shouldGiveFalseIfCarIsNotPresent() {
+    assertFalse(parkingLot.hasCar(new Object()));
+  }
 
-    @Test(expected = UnableToParkException.class)
-    public void shouldNotBeAbleToParkTheSameVehicleTwice() throws UnableToParkException {
-        parkingLot.park(vehicle);
-        parkingLot.park(vehicle);
-    }
+  @Test
+  public void shouldGiveTrueIfCarIsPresent() throws CarCannotBeParkedException {
+    Object token = parkingLot.park(car);
+    assertTrue(parkingLot.hasCar(token));
+  }
 
-    @Test(expected = InvalidCheckoutException.class)
-    public void shouldNotBeAbleToCheckoutSameVehicleTwice() throws InvalidCheckoutException, UnableToParkException {
-        Object token = parkingLot.park(vehicle);
-        parkingLot.checkout(token);
-        parkingLot.checkout(token);
-    }
+  @Test(expected = CarNotFoundException.class)
+  public void shouldThrowExceptionIfCarIsNotInLot() throws CarNotFoundException {
+    parkingLot.unParkCar(car);
+  }
 
-    @Test
-    public void shouldCheckoutSpecificVehicle() throws InvalidCheckoutException, UnableToParkException {
-        Object token = parkingLot.park(vehicle);
-        TestVehicle anotherCar = new TestVehicle();
-        Object anotherToken = parkingLot.park(anotherCar);
-        assertEquals(parkingLot.checkout(token), vehicle);
-        assertTrue(parkingLot.hasVehicleFor(anotherToken));
-    }
+  @Test
+  public void shouldGiveTrueIfParkingLotIsFull() throws CarCannotBeParkedException {
+    ParkingLot parkingLot = new ParkingLot(1,testListener);
+    parkingLot.park(car);
+    assertTrue(parkingLot.isFull());
+  }
 
-    @Test
-    public void shouldAssertFalseForNotFullParkingLot() {
-        assertFalse(parkingLot.isFull());
-    }
+  @Test
+  public void shouldGiveFalseIfParkingLotIsNotFull() {
+    ParkingLot parkingLot = new ParkingLot(1,testListener);
+    assertFalse(parkingLot.isFull());
+  }
 
-    @Test
-    public void shouldAssertTrueWhenParkingLotIsFull() throws UnableToParkException {
-        ParkingLot parkingLot = new ParkingLot(1);
-        parkingLot.park(vehicle);
-        assertTrue(parkingLot.isFull());
-    }
+  @Test(expected = CarCannotBeParkedException.class)
+  public void shouldNotParkCarIfParkingLotIsFull() throws CarCannotBeParkedException {
+    ParkingLot parkingLot = new ParkingLot(1,testListener);
+    parkingLot.park(car);
+    Vehicle anotherCar = new TestCar ();
+    parkingLot.park(anotherCar);
+  }
 
-    @Test
-    public void shouldAssertTrueWhenLotIsFullAndAfterCheckoutLotShouldNotBeFull() throws UnableToParkException, InvalidCheckoutException {
-        ParkingLot parkingLot = new ParkingLot(2);
-        parkingLot.park(vehicle);
-        Object anotherToken = parkingLot.park(new TestVehicle());
-        assertTrue(parkingLot.isFull());
-        parkingLot.checkout(anotherToken);
-        assertFalse(parkingLot.isFull());
-    }
+  @Test
+  public void shouldParkCarIfAnyCarIsUnParked() throws CarCannotBeParkedException, CarNotFoundException {
+    ParkingLot parkingLot = new ParkingLot(2,testListener);
+    Vehicle anotherCar = new TestCar();
+    Object token = parkingLot.park(car);
+    parkingLot.park(anotherCar);
+    parkingLot.unParkCar(token);
+    assertFalse(parkingLot.hasCar(token));
+    Object anotherToken = parkingLot.park (car);
+    assertTrue(parkingLot.hasCar(anotherToken));
+  }
 
-    @Test(expected = UnableToParkException.class)
-    public void shouldNotAllowToParkVehicleWhenLotIsFull() throws UnableToParkException {
-        ParkingLot parkingLot = new ParkingLot(2);
-        parkingLot.park(vehicle);
-        parkingLot.park(new TestVehicle());
-        parkingLot.park(new TestVehicle());
-    }
+  @Test
+  public void name() throws CarCannotBeParkedException {
+    ParkingLot parkingLot = new ParkingLot(2, testListener);
+    parkingLot.addListener(new Assistant());
+    Vehicle car2 = new TestCar();
+    parkingLot.park(car);
+    parkingLot.park(car2);
+    verify(testListener).fireFullEvent();
+  }
 
-    @Test
-    public void shouldBeAbleToParkIfParkingLotIsNotFull() throws UnableToParkException, InvalidCheckoutException {
-        ParkingLot parkingLot = new ParkingLot(1);
-        Object token = parkingLot.park(vehicle);
-        parkingLot.checkout(token);
-        assertNotNull(parkingLot.park(new TestVehicle()));
-    }
+  @Test
+  public void name2() throws CarCannotBeParkedException, CarNotFoundException {
+    ParkingLot parkingLot = new ParkingLot(2, testListener);
+    parkingLot.addListener(new Assistant());
+    Vehicle car2 = new TestCar();
+    parkingLot.park(car);
+    Object token = parkingLot.park(car2);
+    parkingLot.unParkCar(token);
+    verify(testListener).fireHasSpaceEvent();
+  }
+
+  @Test
+  public void name3() throws CarCannotBeParkedException, CarNotFoundException {
+    ParkingLot parkingLot = new ParkingLot(2, testListener);
+    parkingLot.addListener(new Assistant());
+    Vehicle car2 = new TestCar();
+    Object token2 = parkingLot.park(car);
+    Object token = parkingLot.park(car2);
+    parkingLot.unParkCar(token);
+    verify(testListener).fireHasSpaceEvent();
+    parkingLot.unParkCar(token2);
+    verify(testListener) .fireHasSpaceEvent();
+  }
 }
